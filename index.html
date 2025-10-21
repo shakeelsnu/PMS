@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Maintenance & Services</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+        }
+        
+        .logo {
+            font-weight: bold;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary {
+            background-color: var(--success-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #27ae60;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            min-width: 200px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: var(--dark-color);
+            font-size: 0.9rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .service-A {
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+        
+        .service-B {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .service-C {
+            background-color: rgba(243, 156, 18, 0.1);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .pagination button.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+        
+        .pagination button:hover:not(.active) {
+            background-color: #f1f1f1;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        .filters-list {
+            margin-top: 20px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .filters-list table {
+            width: 100%;
+            box-shadow: none;
+            border-radius: 0;
+        }
+
+        .filters-list th {
+            background-color: #f8f9fa;
+            color: var(--dark-color);
+        }
+
+        .filters-list th, .filters-list td {
+            padding: 10px 15px;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            color: #bdc3c7;
+        }
+
+        .step.active {
+            color: var(--secondary-color);
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ecf0f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .step.active .step-number {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .step-line {
+            width: 50px;
+            height: 2px;
+            background-color: #ecf0f1;
+            margin: 0 10px;
+        }
+
+        .step.active ~ .step-line {
+            background-color: var(--secondary-color);
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+
+            .step-line {
+                width: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i>🚛</i> WELCOME TO FLEET MAINTENANCE & SERVICES
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="newServiceBtn">
+                <i>➕</i> New Service
+            </button>
+            <button class="btn" id="serviceHistoryBtn">
+                <i>📋</i> Service History
+            </button>
+        </div>
+        
+        <div class="controls">
+            <div class="filter-group">
+                <label for="fleetType">Fleet Type</label>
+                <select id="fleetType">
+                    <option value="">All Types</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="serviceType">Service Type</label>
+                <select id="serviceType">
+                    <option value="">All Services</option>
+                    <option value="A">Service A</option>
+                    <option value="B">Service B</option>
+                    <option value="C">Service C</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="filterName">Filter Name</label>
+                <select id="filterName">
+                    <option value="">All Filters</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="location">Location</label>
+                <select id="location">
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Total Vehicles</div>
+                <div class="stat-value" id="totalVehicles">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Filters</div>
+                <div class="stat-value" id="totalFilters">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Unique SAP Codes</div>
+                <div class="stat-value" id="uniqueSAP">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Service Types</div>
+                <div class="stat-value" id="serviceTypes">3</div>
+            </div>
+        </div>
+        
+        <table id="fleetTable">
+            <thead>
+                <tr>
+                    <th>Fleet Type</th>
+                    <th>Vehicle Code</th>
+                    <th>Service Type</th>
+                    <th>Filter Name</th>
+                    <th>SAP Code</th>
+                    <th>Qty</th>
+                    <th>Location</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Data will be populated by JavaScript -->
+            </tbody>
+        </table>
+        
+        <div class="pagination" id="pagination">
+            <!-- Pagination will be generated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- New Service Modal -->
+    <div class="modal" id="newServiceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">New Service</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="step-indicator">
+                    <div class="step active" id="step1">
+                        <div class="step-number">1</div>
+                        <div class="step-text">Select Fleet</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step2">
+                        <div class="step-number">2</div>
+                        <div class="step-text">Service Type</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step3">
+                        <div class="step-number">3</div>
+                        <div class="step-text">Service Status</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step" id="step4">
+                        <div class="step-number">4</div>
+                        <div class="step-text">Filters</div>
+                    </div>
+                </div>
+
+                <form id="newServiceForm">
+                    <!-- Step 1: Select Fleet -->
+                    <div class="form-step active" id="step1-form">
+                        <div class="form-group">
+                            <label for="fleetSelect">Select Fleet</label>
+                            <select id="fleetSelect" required>
+                                <option value="">-- Select a fleet --</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="nextToStep2">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Service Type -->
+                    <div class="form-step" id="step2-form">
+                        <div class="form-group">
+                            <label for="serviceTypeSelect">Service Type</label>
+                            <select id="serviceTypeSelect" required>
+                                <option value="">-- Select service type --</option>
+                                <option value="A">Service A</option>
+                                <option value="B">Service B</option>
+                                <option value="C">Service C</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="backToStep1">Back</button>
+                            <button type="button" class="btn btn-primary" id="nextToStep3">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Service Status -->
+                    <div class="form-step" id="step3-form">
+                        <div class="form-group">
+                            <label for="serviceStatus">Service Status</label>
+                            <select id="serviceStatus" required>
+                                <option value="">-- Select service status --</option>
+                                <option value="S/S">S/S</option>
+                                <option value="D/C">D/C</option>
+                                <option value="N/A">N/A</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="backToStep2">Back</button>
+                            <button type="button" class="btn btn-primary" id="nextToStep4">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Filters List -->
+                    <div class="form-step" id="step4-form">
+                        <p>Assigned filters for the selected fleet and service type:</p>
+                        <div class="filters-list">
+                            <table id="filtersTable">
+                                <thead>
+                                    <tr>
+                                        <th>Filter Name</th>
+                                        <th>SAP Code</th>
+                                        <th>Qty</th>
+                                        <th>Location</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="filtersTableBody">
+                                    <!-- Will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="backToStep3">Back</button>
+                            <button type="submit" class="btn btn-primary">Submit Service</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Exact data from the Excel file
+        const fleetData = [
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "A", filterName: "OIL FILTER", sapCode: "10075229", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL FILTER", sapCode: "10075226", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL WATER SEP", sapCode: "10075228", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "OIL FILTER", sapCode: "10075229", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "C", filterName: "AIR FILTER", sapCode: "10023314", qty: "1", uom: "Pcs", location: "BH0104C2_S-04" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "C", filterName: "FUEL FILTER", sapCode: "10075226", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "C", filterName: "AC FILTER", sapCode: "10075227", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "C", filterName: "FUEL WATER SEP", sapCode: "10075228", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "C", filterName: "OIL FILTER", sapCode: "10075229", qty: "1", uom: "Pcs", location: "BH0104C2_S-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "Pcs", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "B", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "B", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "Pcs", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "B", filterName: "FUEL WAT SEPARATOR", sapCode: "10022981", qty: "1", uom: "Pcs", location: "BH0104C2_N-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "B", filterName: "FUEL FILTER", sapCode: "10023958", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "C", filterName: "AIR FILTER", sapCode: "10020226", qty: "1", uom: "Pcs", location: "BH0104C2_AIR FIL RO, BH0104C3_D-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "C", filterName: "AIR FILTER", sapCode: "10022599", qty: "1", uom: "Pcs", location: "BH0104C2_AIR FIL RO, BH0104C2_J-GRD" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "C", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "C", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "Pcs", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "C", filterName: "FUEL WAT SEPARATOR", sapCode: "10022981", qty: "1", uom: "Pcs", location: "BH0104C2_N-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "C", filterName: "FUEL FILTER", sapCode: "10023958", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "Pcs", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "B", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "B", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "Pcs", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "B", filterName: "FUEL WAT SEPARATOR", sapCode: "10022981", qty: "1", uom: "Pcs", location: "BH0104C2_N-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "B", filterName: "FUEL FILTER", sapCode: "10023958", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "C", filterName: "AIR FILTER", sapCode: "10020226", qty: "1", uom: "Pcs", location: "BH0104C2_AIR FIL RO, BH0104C3_D-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "C", filterName: "AIR FILTER", sapCode: "10022599", qty: "1", uom: "Pcs", location: "BH0104C2_AIR FIL RO, BH0104C2_J-GRD" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "C", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "C", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "Pcs", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "C", filterName: "FUEL WAT SEPARATOR", sapCode: "10022981", qty: "1", uom: "Pcs", location: "BH0104C2_N-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "C", filterName: "FUEL FILTER", sapCode: "10023958", qty: "1", uom: "Pcs", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "PCS", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "PCS", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "B", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "PCS", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "B", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "PCS", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "B", filterName: "FUEL WATER SEP", sapCode: "10022981", qty: "1", uom: "PCS", location: "BH0104C2_N-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "B", filterName: "FUEL FILTER", sapCode: "10023958", qty: "1", uom: "PCS", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "C", filterName: "AIR FILTER (INNER )", sapCode: "10020226", qty: "1", uom: "PCS", location: "BH0104C2_AIR FIL RO, BH0104C3_D-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "C", filterName: "AIR FILTER (OUTER)", sapCode: "10022599", qty: "1", uom: "PCS", location: "BH0104C2_AIR FIL RO, BH0104C2_J-GRD" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "C", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", uom: "PCS", location: "BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "C", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", uom: "PCS", location: "BH0104C1_P-03, BH0104C2_P-03" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "C", filterName: "FUEL WATER SEP", sapCode: "10022981", qty: "1", uom: "PCS", location: "BH0104C2_N-02" },
+            { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "C", filterName: "FUEL FILTER", sapCode: "10023958", qty: "1", uom: "PCS", location: "BH0104C2_P-03" }
+        ];
+
+        // DOM elements
+        const fleetTypeFilter = document.getElementById('fleetType');
+        const serviceTypeFilter = document.getElementById('serviceType');
+        const filterNameFilter = document.getElementById('filterName');
+        const locationFilter = document.getElementById('location');
+        const tableBody = document.getElementById('tableBody');
+        const pagination = document.getElementById('pagination');
+        const totalVehicles = document.getElementById('totalVehicles');
+        const totalFilters = document.getElementById('totalFilters');
+        const uniqueSAP = document.getElementById('uniqueSAP');
+        const serviceTypes = document.getElementById('serviceTypes');
+        const newServiceBtn = document.getElementById('newServiceBtn');
+        const serviceHistoryBtn = document.getElementById('serviceHistoryBtn');
+
+        // Modal elements
+        const newServiceModal = document.getElementById('newServiceModal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const fleetSelect = document.getElementById('fleetSelect');
+        const serviceTypeSelect = document.getElementById('serviceTypeSelect');
+        const serviceStatus = document.getElementById('serviceStatus');
+        const filtersTableBody = document.getElementById('filtersTableBody');
+        const newServiceForm = document.getElementById('newServiceForm');
+
+        // Form navigation buttons
+        const nextToStep2Btn = document.getElementById('nextToStep2');
+        const backToStep1Btn = document.getElementById('backToStep1');
+        const nextToStep3Btn = document.getElementById('nextToStep3');
+        const backToStep2Btn = document.getElementById('backToStep2');
+        const nextToStep4Btn = document.getElementById('nextToStep4');
+        const backToStep3Btn = document.getElementById('backToStep3');
+
+        // Step indicators
+        const step1Indicator = document.getElementById('step1');
+        const step2Indicator = document.getElementById('step2');
+        const step3Indicator = document.getElementById('step3');
+        const step4Indicator = document.getElementById('step4');
+
+        // Form steps
+        const step1Form = document.getElementById('step1-form');
+        const step2Form = document.getElementById('step2-form');
+        const step3Form = document.getElementById('step3-form');
+        const step4Form = document.getElementById('step4-form');
+
+        // Initialize the application
+        function init() {
+            populateFilters();
+            renderTable();
+            updateStats();
+            populateFleetSelect();
+            
+            // Event listeners for filters
+            fleetTypeFilter.addEventListener('change', renderTable);
+            serviceTypeFilter.addEventListener('change', renderTable);
+            filterNameFilter.addEventListener('change', renderTable);
+            locationFilter.addEventListener('change', renderTable);
+            
+            // Event listeners for modal
+            newServiceBtn.addEventListener('click', openNewServiceModal);
+            closeModalBtn.addEventListener('click', closeNewServiceModal);
+            cancelBtn.addEventListener('click', closeNewServiceModal);
+            
+            // Form navigation
+            nextToStep2Btn.addEventListener('click', goToStep2);
+            backToStep1Btn.addEventListener('click', goToStep1);
+            nextToStep3Btn.addEventListener('click', goToStep3);
+            backToStep2Btn.addEventListener('click', goToStep2);
+            nextToStep4Btn.addEventListener('click', goToStep4);
+            backToStep3Btn.addEventListener('click', goToStep3);
+            
+            // Form submission
+            newServiceForm.addEventListener('submit', submitNewService);
+        }
+
+        // Populate filter dropdowns
+        function populateFilters() {
+            const fleetTypes = [...new Set(fleetData.map(item => item.fleetType))];
+            const filterNames = [...new Set(fleetData.map(item => item.filterName))];
+            const locations = [...new Set(fleetData.map(item => item.location))];
+            
+            fleetTypes.forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                fleetTypeFilter.appendChild(option);
+            });
+            
+            filterNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                filterNameFilter.appendChild(option);
+            });
+            
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationFilter.appendChild(option);
+            });
+        }
+
+        // Render the table with data
+        function renderTable() {
+            const fleetType = fleetTypeFilter.value;
+            const serviceType = serviceTypeFilter.value;
+            const filterName = filterNameFilter.value;
+            const location = locationFilter.value;
+            
+            // Filter data based on selected filters
+            const filteredData = fleetData.filter(item => {
+                return (!fleetType || item.fleetType === fleetType) &&
+                       (!serviceType || item.serviceType === serviceType) &&
+                       (!filterName || item.filterName === filterName) &&
+                       (!location || item.location === location);
+            });
+            
+            // Clear table
+            tableBody.innerHTML = '';
+            
+            // Populate table
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = `service-${item.serviceType}`;
+                
+                row.innerHTML = `
+                    <td>${item.fleetType}</td>
+                    <td>${item.vehicleCode}</td>
+                    <td>Service ${item.serviceType}</td>
+                    <td>${item.filterName}</td>
+                    <td>${item.sapCode}</td>
+                    <td>${item.qty}</td>
+                    <td>${item.location}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Update pagination
+            updatePagination(filteredData.length);
+        }
+
+        // Update pagination
+        function updatePagination(totalItems) {
+            pagination.innerHTML = '';
+            const itemsPerPage = 10;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                if (i === 1) button.classList.add('active');
+                
+                button.addEventListener('click', () => {
+                    // Remove active class from all buttons
+                    pagination.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked button
+                    button.classList.add('active');
+                    
+                    // Update table to show the selected page
+                    // This is a simplified implementation - in a real app, you'd update the table content
+                });
+                
+                pagination.appendChild(button);
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            const uniqueVehicles = [...new Set(fleetData.map(item => item.vehicleCode))].length;
+            const uniqueFilterNames = [...new Set(fleetData.map(item => item.filterName))].length;
+            const uniqueSAPCodes = [...new Set(fleetData.map(item => item.sapCode))].length;
+            const uniqueServiceTypes = [...new Set(fleetData.map(item => item.serviceType))].length;
+            
+            totalVehicles.textContent = uniqueVehicles;
+            totalFilters.textContent = uniqueFilterNames;
+            uniqueSAP.textContent = uniqueSAPCodes;
+            serviceTypes.textContent = uniqueServiceTypes;
+        }
+
+        // Populate fleet select in modal
+        function populateFleetSelect() {
+            const uniqueVehicles = [...new Set(fleetData.map(item => item.vehicleCode))];
+            
+            uniqueVehicles.forEach(vehicle => {
+                const option = document.createElement('option');
+                option.value = vehicle;
+                option.textContent = vehicle;
+                fleetSelect.appendChild(option);
+            });
+        }
+
+        // Open new service modal
+        function openNewServiceModal() {
+            newServiceModal.style.display = 'flex';
+            resetForm();
+        }
+
+        // Close new service modal
+        function closeNewServiceModal() {
+            newServiceModal.style.display = 'none';
+        }
+
+        // Reset form to initial state
+        function resetForm() {
+            goToStep1();
+            fleetSelect.value = '';
+            serviceTypeSelect.value = '';
+            serviceStatus.value = '';
+            filtersTableBody.innerHTML = '';
+        }
+
+        // Form navigation functions
+        function goToStep1() {
+            step1Form.classList.add('active');
+            step2Form.classList.remove('active');
+            step3Form.classList.remove('active');
+            step4Form.classList.remove('active');
+            
+            step1Indicator.classList.add('active');
+            step2Indicator.classList.remove('active');
+            step3Indicator.classList.remove('active');
+            step4Indicator.classList.remove('active');
+        }
+
+        function goToStep2() {
+            if (!fleetSelect.value) {
+                alert('Please select a fleet');
+                return;
+            }
+            
+            step1Form.classList.remove('active');
+            step2Form.classList.add('active');
+            step3Form.classList.remove('active');
+            step4Form.classList.remove('active');
+            
+            step1Indicator.classList.add('active');
+            step2Indicator.classList.add('active');
+            step3Indicator.classList.remove('active');
+            step4Indicator.classList.remove('active');
+        }
+
+        function goToStep3() {
+            if (!serviceTypeSelect.value) {
+                alert('Please select a service type');
+                return;
+            }
+            
+            step1Form.classList.remove('active');
+            step2Form.classList.remove('active');
+            step3Form.classList.add('active');
+            step4Form.classList.remove('active');
+            
+            step1Indicator.classList.add('active');
+            step2Indicator.classList.add('active');
+            step3Indicator.classList.add('active');
+            step4Indicator.classList.remove('active');
+        }
+
+        function goToStep4() {
+            if (!serviceStatus.value) {
+                alert('Please select a service status');
+                return;
+            }
+            
+            // Get selected fleet and service type
+            const selectedFleet = fleetSelect.value;
+            const selectedServiceType = serviceTypeSelect.value;
+            
+            // Filter data based on selection
+            const filteredData = fleetData.filter(item => {
+                return item.vehicleCode === selectedFleet && item.serviceType === selectedServiceType;
+            });
+            
+            // Clear filters table
+            filtersTableBody.innerHTML = '';
+            
+            // Populate filters table
+            if (filteredData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="4" style="text-align: center;">No filters found for this combination</td>`;
+                filtersTableBody.appendChild(row);
+            } else {
+                filteredData.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.filterName}</td>
+                        <td>${item.sapCode}</td>
+                        <td>${item.qty}</td>
+                        <td>${item.location}</td>
+                    `;
+                    filtersTableBody.appendChild(row);
+                });
+            }
+            
+            step1Form.classList.remove('active');
+            step2Form.classList.remove('active');
+            step3Form.classList.remove('active');
+            step4Form.classList.add('active');
+            
+            step1Indicator.classList.add('active');
+            step2Indicator.classList.add('active');
+            step3Indicator.classList.add('active');
+            step4Indicator.classList.add('active');
+        }
+
+        // Submit new service form
+        function submitNewService(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const selectedFleet = fleetSelect.value;
+            const selectedServiceType = serviceTypeSelect.value;
+            const selectedServiceStatus = serviceStatus.value;
+            
+            // In a real application, you would send this data to a server
+            // For this example, we'll just show an alert and close the modal
+            alert(`New service created:\nFleet: ${selectedFleet}\nService Type: ${selectedServiceType}\nService Status: ${selectedServiceStatus}`);
+            
+            // Close modal
+            closeNewServiceModal();
+        }
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
