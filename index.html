@@ -571,6 +571,12 @@
             margin-top: 2px;
         }
 
+        .description-content {
+            word-wrap: break-word;
+            white-space: normal;
+            line-height: 1.4;
+        }
+
         /* Radio Button Styles */
         .radio-group {
             display: flex;
@@ -1337,7 +1343,7 @@
             }
         }
 
-        // Process Excel data
+        // Process Excel data - FIXED to handle special characters properly
         function processExcelData(excelData) {
             if (!excelData || excelData.length < 2) {
                 throw new Error('Excel file is empty or has no data');
@@ -1359,6 +1365,7 @@
                 'service type': 'serviceType',
                 'filter': 'filterName',
                 'filter name': 'filterName',
+                'description': 'filterName', // Added description mapping
                 'sap': 'sapCode',
                 'sap code': 'sapCode',
                 'qty': 'qty',
@@ -1377,23 +1384,24 @@
             
             addDebugInfo(`Detected columns: ${JSON.stringify(columnIndices)}`);
             
-            // Process data rows
+            // Process data rows - FIXED to handle all character types properly
             let processedCount = 0;
             for (let i = 1; i < excelData.length; i++) {
                 const row = excelData[i];
                 if (row && row.length > 0 && !row.every(cell => cell === '' || cell === null || cell === undefined)) {
+                    // Use more robust data extraction
                     const item = {
-                        fleetType: columnIndices.fleetType !== undefined ? String(row[columnIndices.fleetType] || '').trim() : '',
-                        vehicleCode: columnIndices.vehicleCode !== undefined ? String(row[columnIndices.vehicleCode] || '').trim() : '',
-                        serviceType: columnIndices.serviceType !== undefined ? String(row[columnIndices.serviceType] || '').trim() : '',
-                        filterName: columnIndices.filterName !== undefined ? String(row[columnIndices.filterName] || '').trim() : '',
-                        sapCode: columnIndices.sapCode !== undefined ? String(row[columnIndices.sapCode] || '').trim() : '',
-                        qty: columnIndices.qty !== undefined ? String(row[columnIndices.qty] || '').trim() : '',
-                        location: columnIndices.location !== undefined ? String(row[columnIndices.location] || '').trim() : ''
+                        fleetType: getCellValue(row, columnIndices.fleetType),
+                        vehicleCode: getCellValue(row, columnIndices.vehicleCode),
+                        serviceType: getCellValue(row, columnIndices.serviceType),
+                        filterName: getCellValue(row, columnIndices.filterName),
+                        sapCode: getCellValue(row, columnIndices.sapCode),
+                        qty: getCellValue(row, columnIndices.qty),
+                        location: getCellValue(row, columnIndices.location)
                     };
                     
-                    // Only add if we have at least vehicleCode
-                    if (item.vehicleCode && item.vehicleCode !== '') {
+                    // Only add if we have at least vehicleCode or filterName
+                    if ((item.vehicleCode && item.vehicleCode !== '') || (item.filterName && item.filterName !== '')) {
                         fleetData.push(item);
                         processedCount++;
                     }
@@ -1406,17 +1414,42 @@
             initializeWithData();
         }
 
-        // Load fallback data
+        // Helper function to safely get cell values with proper encoding
+        function getCellValue(row, columnIndex) {
+            if (columnIndex === undefined || columnIndex === null || columnIndex >= row.length) {
+                return '';
+            }
+            
+            const cellValue = row[columnIndex];
+            
+            // Handle different data types and ensure proper string conversion
+            if (cellValue === null || cellValue === undefined) {
+                return '';
+            }
+            
+            // Convert to string and trim, but preserve special characters
+            const stringValue = String(cellValue).trim();
+            
+            // Debug log for special characters
+            if (stringValue && /[^a-zA-Z0-9\s]/.test(stringValue)) {
+                addDebugInfo(`Found special characters in: "${stringValue}"`);
+            }
+            
+            return stringValue;
+        }
+
+        // Load fallback data with more realistic descriptions including special characters
         function loadFallbackData() {
             addDebugInfo('Loading fallback data');
             
-            // Use comprehensive sample data as fallback
+            // Use comprehensive sample data as fallback with special characters
             fleetData = [
-                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "A", filterName: "OIL FILTER", sapCode: "10075229", qty: "1", location: "BH0104C2_S-03" },
-                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL FILTER", sapCode: "10075226", qty: "1", location: "BH0104C2_S-03" },
-                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL WATER SEP", sapCode: "10075228", qty: "1", location: "BH0104C2_S-03" },
-                { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", location: "BH0104C2_P-03" },
-                { fleetType: "CRANE", vehicleCode: "C-001_CRANE_SPECIAL", serviceType: "A", filterName: "CRANE FILTER", sapCode: "CRANE001", qty: "1", location: "CRANE_BAY_01" }
+                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "A", filterName: "OIL FILTER (15W-40)", sapCode: "10075229", qty: "1", location: "BH0104C2_S-03" },
+                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL FILTER - PRIMARY", sapCode: "10075226", qty: "1", location: "BH0104C2_S-03" },
+                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL WATER SEPARATOR", sapCode: "10075228", qty: "1", location: "BH0104C2_S-03" },
+                { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "A", filterName: "AIR FILTER (HD-3457)", sapCode: "10022738", qty: "1", location: "BH0104C2_P-03" },
+                { fleetType: "CRANE", vehicleCode: "C-001_CRANE_SPECIAL", serviceType: "A", filterName: "HYDRAULIC FILTER - 25µ", sapCode: "CRANE001", qty: "1", location: "CRANE_BAY_01" },
+                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "C", filterName: "COOLANT FILTER + ADDITIVE", sapCode: "CF-1001", qty: "1", location: "BH0104C2_S-03" }
             ];
             
             hideLoading();
@@ -1432,6 +1465,7 @@
             
             addDebugInfo(`Total fleet records: ${fleetData.length}`);
             addDebugInfo(`Unique vehicles: ${[...new Set(fleetData.map(item => item.vehicleCode))].length}`);
+            addDebugInfo(`Sample descriptions: ${fleetData.slice(0, 3).map(item => `"${item.filterName}"`).join(', ')}`);
         }
 
         // Update Service Cabin options based on selected fleet
@@ -1688,7 +1722,7 @@
             stepIndicator.classList.add('active');
         }
 
-        // Populate filters table with data from Excel
+        // Populate filters table with data from Excel - FIXED to properly display descriptions
         function populateFiltersTable() {
             const filtersTableBody = document.getElementById('filtersTableBody');
             const lubricantsTableBody = document.getElementById('lubricantsTableBody');
@@ -1715,14 +1749,15 @@
                     const itemKey = `${item.filterName}_${item.sapCode}`;
                     const givenQty = givenQuantities[itemKey] || item.qty;
                     
+                    // FIXED: Use proper text content handling for special characters
                     row.innerHTML = `
                         <td>
                             <div class="description-with-sap">
-                                <div>${item.filterName}</div>
-                                <div class="sap-code">SAP: ${item.sapCode || 'N/A'}</div>
+                                <div class="description-content">${escapeHtml(item.filterName)}</div>
+                                <div class="sap-code">SAP: ${escapeHtml(item.sapCode || 'N/A')}</div>
                             </div>
                         </td>
-                        <td class="assigned-qty">${item.qty} Pieces</td>
+                        <td class="assigned-qty">${escapeHtml(item.qty)} Pieces</td>
                         <td>
                             <input type="number" 
                                    class="given-qty-input" 
@@ -1748,8 +1783,9 @@
             
             // Add lubricants with SAP codes
             const lubricants = [
-                { name: 'Engine Oil', sapCode: 'LUB-001' },
-                { name: 'Gear Oil', sapCode: 'LUB-002' }
+                { name: 'Engine Oil (15W-40)', sapCode: 'LUB-001' },
+                { name: 'Gear Oil (80W-90)', sapCode: 'LUB-002' },
+                { name: 'Brake Fluid (DOT-4)', sapCode: 'LUB-003' }
             ];
             
             lubricants.forEach(lubricant => {
@@ -1760,8 +1796,8 @@
                 row.innerHTML = `
                     <td>
                         <div class="description-with-sap">
-                            <div>${lubricant.name}</div>
-                            <div class="sap-code">SAP: ${lubricant.sapCode}</div>
+                            <div class="description-content">${escapeHtml(lubricant.name)}</div>
+                            <div class="sap-code">SAP: ${escapeHtml(lubricant.sapCode)}</div>
                         </div>
                     </td>
                     <td>
@@ -1786,6 +1822,14 @@
             });
         }
 
+        // Helper function to escape HTML to prevent XSS and display special characters properly
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // Add additional item
         function addAdditionalItem() {
             const newItem = document.createElement('div');
@@ -1802,7 +1846,7 @@
             additionalItems.appendChild(newItem);
         }
 
-        // Generate preview
+        // Generate preview - FIXED to properly handle special characters in descriptions
         function generatePreview() {
             // Update header details - Date only (no time)
             const now = new Date();
@@ -1830,7 +1874,7 @@
             filterRows.forEach(row => {
                 const cells = row.cells;
                 const descElement = cells[0].querySelector('.description-with-sap');
-                const desc = descElement.querySelector('div:first-child').textContent;
+                const desc = descElement.querySelector('.description-content').textContent;
                 const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
                 const assignedQty = cells[1].textContent;
                 const givenQtyInput = row.querySelector('.given-qty-input');
@@ -1847,7 +1891,7 @@
             lubricantRows.forEach(row => {
                 const cells = row.cells;
                 const descElement = cells[0].querySelector('.description-with-sap');
-                const desc = descElement.querySelector('div:first-child').textContent;
+                const desc = descElement.querySelector('.description-content').textContent;
                 const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
                 const givenQtyInput = row.querySelector('.given-qty-input');
                 const givenQty = givenQtyInput ? givenQtyInput.value : '0';
@@ -1883,20 +1927,20 @@
             return 'Not Given';
         }
 
-        // Add row to preview table
+        // Add row to preview table - FIXED to properly handle special characters
         function addPreviewRow(sn, desc, sapCode, assignedQty, givenQty, status) {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${sn}</td>
                 <td>
                     <div class="description-with-sap">
-                        <div>${desc}</div>
-                        ${sapCode ? `<div class="sap-code">SAP: ${sapCode}</div>` : ''}
+                        <div class="description-content">${escapeHtml(desc)}</div>
+                        ${sapCode ? `<div class="sap-code">SAP: ${escapeHtml(sapCode)}</div>` : ''}
                     </div>
                 </td>
-                <td>${assignedQty}</td>
-                <td>${givenQty}</td>
-                <td>${status}</td>
+                <td>${escapeHtml(assignedQty)}</td>
+                <td>${escapeHtml(givenQty)}</td>
+                <td>${escapeHtml(status)}</td>
             `;
             previewTableBody.appendChild(row);
         }
@@ -1934,7 +1978,7 @@
             filterRows.forEach(row => {
                 const cells = row.cells;
                 const descElement = cells[0].querySelector('.description-with-sap');
-                const desc = descElement.querySelector('div:first-child').textContent;
+                const desc = descElement.querySelector('.description-content').textContent;
                 const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
                 const givenQtyInput = row.querySelector('.given-qty-input');
                 const givenQty = givenQtyInput ? givenQtyInput.value : '0';
@@ -1954,7 +1998,7 @@
             lubricantRows.forEach(row => {
                 const cells = row.cells;
                 const descElement = cells[0].querySelector('.description-with-sap');
-                const desc = descElement.querySelector('div:first-child').textContent;
+                const desc = descElement.querySelector('.description-content').textContent;
                 const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
                 const givenQtyInput = row.querySelector('.given-qty-input');
                 const givenQty = givenQtyInput ? givenQtyInput.value : '0';
@@ -2064,7 +2108,7 @@
             }
         }
 
-        // Display service details
+        // Display service details - FIXED to properly handle special characters
         function displayServiceDetails(service) {
             let html = `
                 <h4>Service Details</h4>
@@ -2078,7 +2122,7 @@
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Fleet:</div>
-                    <div class="detail-value">${service.fleet}</div>
+                    <div class="detail-value">${escapeHtml(service.fleet)}</div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Service Type:</div>
@@ -2086,11 +2130,11 @@
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Service Cabin:</div>
-                    <div class="detail-value">${service.serviceCabin}</div>
+                    <div class="detail-value">${escapeHtml(service.serviceCabin)}</div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Assignee:</div>
-                    <div class="detail-value">${service.assignee}</div>
+                    <div class="detail-value">${escapeHtml(service.assignee)}</div>
                 </div>
                 <div class="detail-row">
                     <div class="detail-label">Status:</div>
@@ -2117,13 +2161,13 @@
                         <td>${item.sn}</td>
                         <td>
                             <div class="description-with-sap">
-                                <div>${item.description}</div>
-                                ${item.sapCode ? `<div class="sap-code">SAP: ${item.sapCode}</div>` : ''}
+                                <div class="description-content">${escapeHtml(item.description)}</div>
+                                ${item.sapCode ? `<div class="sap-code">SAP: ${escapeHtml(item.sapCode)}</div>` : ''}
                             </div>
                         </td>
-                        <td>${item.assignedQuantity}</td>
-                        <td>${item.givenQuantity}</td>
-                        <td>${item.status}</td>
+                        <td>${escapeHtml(item.assignedQuantity)}</td>
+                        <td>${escapeHtml(item.givenQuantity)}</td>
+                        <td>${escapeHtml(item.status)}</td>
                     </tr>
                 `;
             });
@@ -2151,6 +2195,7 @@
                             .detail-row { margin-bottom: 10px; }
                             .detail-label { font-weight: bold; display: inline-block; width: 150px; }
                             .sap-code { font-size: 0.8rem; color: #666; margin-top: 2px; }
+                            .description-content { word-wrap: break-word; white-space: normal; line-height: 1.4; }
                         </style>
                     </head>
                     <body>
