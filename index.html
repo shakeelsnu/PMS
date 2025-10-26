@@ -6,6 +6,9 @@
     <title>Fleet Maintenance & Services</title>
     <!-- Include SheetJS library for Excel parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Include jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -72,6 +75,7 @@
             gap: 15px;
             margin: 20px 0;
             justify-content: center;
+            flex-wrap: wrap;
         }
         
         .btn {
@@ -111,6 +115,27 @@
             background-color: #7f8c8d;
         }
         
+        .btn-danger {
+            background-color: var(--accent-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-export {
+            background-color: var(--warning-color);
+        }
+        
+        .btn-export:hover {
+            background-color: #e67e22;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
         .btn:disabled {
             background-color: #bdc3c7;
             cursor: not-allowed;
@@ -121,6 +146,17 @@
             background-color: #bdc3c7;
             box-shadow: none;
             transform: none;
+        }
+        
+        select:disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .option-disabled {
+            color: #6c757d;
+            background-color: #f8f9fa;
         }
         
         .loading {
@@ -191,6 +227,7 @@
             font-size: 0.8rem;
             max-height: 200px;
             overflow-y: auto;
+            display: none;
         }
 
         /* Modal Styles */
@@ -211,10 +248,14 @@
             background-color: white;
             border-radius: 8px;
             width: 90%;
-            max-width: 800px;
+            max-width: 900px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-large {
+            max-width: 95%;
         }
 
         .modal-header {
@@ -280,25 +321,26 @@
 
         .filters-list {
             margin-top: 20px;
-            border: 1px solid #eee;
+            border: 1px solid #ddd;
             border-radius: 4px;
             overflow: hidden;
         }
 
         .filters-list table {
             width: 100%;
-            box-shadow: none;
-            border-radius: 0;
+            border-collapse: collapse;
         }
 
         .filters-list th {
             background-color: #f8f9fa;
             color: var(--dark-color);
+            border: 1px solid #ddd;
         }
 
         .filters-list th, .filters-list td {
             padding: 10px 15px;
             text-align: left;
+            border: 1px solid #ddd;
         }
 
         .step-indicator {
@@ -371,36 +413,24 @@
             font-weight: bold;
         }
         
-        .ideal-status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .status-indicator {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: var(--success-color);
-            cursor: pointer;
-        }
-        
-        .status-indicator.not-ideal {
-            background-color: var(--accent-color);
-        }
-        
         .additional-items {
             margin-top: 20px;
         }
         
         .additional-item {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 10px;
             margin-bottom: 10px;
+            align-items: center;
         }
         
-        .additional-item input {
-            flex: 1;
+        .additional-item input, .additional-item select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
         }
         
         .add-item-btn {
@@ -412,23 +442,214 @@
             align-items: center;
             gap: 5px;
             margin-top: 10px;
+            font-size: 14px;
         }
         
         .preview-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            border: 1px solid #ddd;
         }
         
         .preview-table th, .preview-table td {
             padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #eee;
+            border: 1px solid #ddd;
         }
         
         .preview-table th {
             background-color: var(--primary-color);
             color: white;
+        }
+        
+        .service-details-header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .service-details-footer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .signature-space {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #ddd;
+        }
+        
+        .service-history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .service-history-table th, .service-history-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        
+        .service-history-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .history-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .service-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+        }
+        
+        .service-details h4 {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            min-width: 150px;
+            color: var(--dark-color);
+        }
+        
+        .detail-value {
+            flex: 1;
+        }
+        
+        .qty-comparison {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .assigned-qty {
+            color: #666;
+            font-style: italic;
+        }
+        
+        .given-qty-input {
+            width: 80px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .description-with-sap {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sap-code {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* Radio Button Styles */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+
+        .radio-option:hover {
+            border-color: var(--secondary-color);
+            background-color: #e3f2fd;
+        }
+
+        .radio-option.selected {
+            border-color: var(--secondary-color);
+            background-color: #e3f2fd;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+        }
+
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+
+        .radio-custom {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #b0b0b0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .radio-option.selected .radio-custom {
+            border-color: var(--secondary-color);
+            background-color: var(--secondary-color);
+        }
+
+        .radio-custom::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+            transform: scale(0);
+            transition: transform 0.3s ease;
+        }
+
+        .radio-option.selected .radio-custom::after {
+            transform: scale(1);
+        }
+
+        .radio-label {
+            font-weight: 500;
+            color: #333;
+            flex: 1;
+        }
+
+        .radio-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .radio-disabled:hover {
+            border-color: #e0e0e0;
+            background-color: #f8f9fa;
         }
         
         @media (max-width: 768px) {
@@ -459,6 +680,38 @@
                 height: 25px;
                 font-size: 0.9rem;
             }
+            
+            .additional-item {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            
+            .history-actions {
+                justify-content: center;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+            }
+            
+            .detail-label {
+                min-width: auto;
+                margin-bottom: 5px;
+            }
+            
+            .qty-comparison {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .radio-group {
+                gap: 8px;
+            }
+
+            .radio-option {
+                padding: 10px 12px;
+            }
         }
     </style>
 </head>
@@ -487,10 +740,8 @@
         <div id="errorContainer" style="display: none;"></div>
         <div id="successContainer" style="display: none;"></div>
         
-        <!-- Debug information (can be removed in production) -->
-        <div id="debugContainer" style="display: none;">
-            <h3>Debug Information:</h3>
-            <div class="debug-info" id="debugInfo"></div>
+        <div class="debug-info" id="debugInfo">
+            <!-- Debug information will be populated here -->
         </div>
         
         <div id="mainContent" style="display: none;">
@@ -537,7 +788,7 @@
                     <div class="step-line"></div>
                     <div class="step" id="step4">
                         <div class="step-number">4</div>
-                        <div class="step-text">Filters</div>
+                        <div class="step-text">Filters & Lubricants</div>
                     </div>
                     <div class="step-line"></div>
                     <div class="step" id="step5">
@@ -563,7 +814,6 @@
                             <label for="fleetSelect">Select Fleet</label>
                             <select id="fleetSelect" required>
                                 <option value="">-- Select a fleet --</option>
-                                <!-- Fleet options will be populated dynamically -->
                             </select>
                         </div>
                         <div class="form-actions">
@@ -572,16 +822,27 @@
                         </div>
                     </div>
 
-                    <!-- Step 2: Service Type -->
+                    <!-- Step 2: Service Type (Radio Buttons) -->
                     <div class="form-step" id="step2-form">
                         <div class="form-group">
-                            <label for="serviceTypeSelect">Service Type</label>
-                            <select id="serviceTypeSelect" required>
-                                <option value="">-- Select service type --</option>
-                                <option value="A">Service A</option>
-                                <option value="B">Service B</option>
-                                <option value="C">Service C</option>
-                            </select>
+                            <label>Service Type</label>
+                            <div class="radio-group" id="serviceTypeRadioGroup">
+                                <div class="radio-option" data-value="A">
+                                    <div class="radio-custom"></div>
+                                    <span class="radio-label">Service A</span>
+                                    <input type="radio" name="serviceType" value="A" required>
+                                </div>
+                                <div class="radio-option" data-value="B">
+                                    <div class="radio-custom"></div>
+                                    <span class="radio-label">Service B</span>
+                                    <input type="radio" name="serviceType" value="B">
+                                </div>
+                                <div class="radio-option" data-value="C">
+                                    <div class="radio-custom"></div>
+                                    <span class="radio-label">Service C</span>
+                                    <input type="radio" name="serviceType" value="C">
+                                </div>
+                            </div>
                         </div>
                         <div class="form-actions">
                             <button type="button" class="btn btn-secondary" id="backToStep1">Back</button>
@@ -589,16 +850,13 @@
                         </div>
                     </div>
 
-                    <!-- Step 3: Service Cabin -->
+                    <!-- Step 3: Service Cabin (Radio Buttons) -->
                     <div class="form-step" id="step3-form">
                         <div class="form-group">
-                            <label for="serviceCabin">Service Cabin</label>
-                            <select id="serviceCabin" required>
-                                <option value="">-- Select service cabin --</option>
-                                <option value="S/S">S/S</option>
-                                <option value="D/C">D/C</option>
-                                <option value="N/A">N/A</option>
-                            </select>
+                            <label>Service Cabin</label>
+                            <div class="radio-group" id="serviceCabinRadioGroup">
+                                <!-- Options will be populated dynamically -->
+                            </div>
                         </div>
                         <div class="form-actions">
                             <button type="button" class="btn btn-secondary" id="backToStep2">Back</button>
@@ -606,17 +864,16 @@
                         </div>
                     </div>
 
-                    <!-- Step 4: Filters -->
+                    <!-- Step 4: Filters & Lubricants -->
                     <div class="form-step" id="step4-form">
-                        <p>Assigned filters for the selected fleet and service type:</p>
+                        <p>Assigned items for the selected fleet and service type:</p>
                         <div class="filters-list">
                             <table id="filtersTable">
                                 <thead>
                                     <tr>
-                                        <th>Filter Name</th>
-                                        <th>Ideal Status</th>
-                                        <th>Quantity</th>
-                                        <th>Unit</th>
+                                        <th>Description</th>
+                                        <th>Assigned Qty</th>
+                                        <th>Given Qty</th>
                                     </tr>
                                 </thead>
                                 <tbody id="filtersTableBody">
@@ -631,40 +888,12 @@
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Lubricant Type</th>
-                                            <th>Ideal Status</th>
-                                            <th>Quantity (Ltrs)</th>
+                                            <th>Description</th>
+                                            <th>Given Qty</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>Engine Oil</td>
-                                            <td class="ideal-status">
-                                                <div class="status-indicator ideal" id="engineOilStatus"></div>
-                                                <span>Ideal</span>
-                                            </td>
-                                            <td>
-                                                <div class="qty-control">
-                                                    <button type="button" class="qty-btn" id="engineOilDecrease">-</button>
-                                                    <span class="qty-value" id="engineOilQty">5</span>
-                                                    <button type="button" class="qty-btn" id="engineOilIncrease">+</button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>Gear Oil</td>
-                                            <td class="ideal-status">
-                                                <div class="status-indicator ideal" id="gearOilStatus"></div>
-                                                <span>Ideal</span>
-                                            </td>
-                                            <td>
-                                                <div class="qty-control">
-                                                    <button type="button" class="qty-btn" id="gearOilDecrease">-</button>
-                                                    <span class="qty-value" id="gearOilQty">2</span>
-                                                    <button type="button" class="qty-btn" id="gearOilIncrease">+</button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                    <tbody id="lubricantsTableBody">
+                                        <!-- Will be populated dynamically -->
                                     </tbody>
                                 </table>
                             </div>
@@ -682,11 +911,12 @@
                             <label>Additional Items (if any)</label>
                             <div class="additional-items" id="additionalItems">
                                 <div class="additional-item">
-                                    <input type="text" placeholder="Item name">
-                                    <input type="number" placeholder="Qty" min="1">
-                                    <select>
-                                        <option value="pieces">Pieces</option>
-                                        <option value="ltrs">Liters</option>
+                                    <input type="text" placeholder="Description" class="item-desc">
+                                    <input type="text" placeholder="SAP Code" class="item-sap">
+                                    <input type="number" placeholder="Qty" min="1" class="item-qty">
+                                    <select class="item-unit">
+                                        <option value="Pieces">Pieces</option>
+                                        <option value="Ltrs">Ltrs</option>
                                     </select>
                                 </div>
                             </div>
@@ -717,13 +947,35 @@
                         <h3>Service Preview</h3>
                         <p>Please review the service details before submitting:</p>
                         
+                        <!-- Service Details Header -->
+                        <div class="service-details-header">
+                            <div class="detail-row">
+                                <div class="detail-label">Date:</div>
+                                <div class="detail-value" id="previewDate"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Fleet:</div>
+                                <div class="detail-value" id="previewFleet"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Service Type:</div>
+                                <div class="detail-value" id="previewServiceType"></div>
+                            </div>
+                            <div class="detail-row">
+                                <div class="detail-label">Service Cabin:</div>
+                                <div class="detail-value" id="previewServiceCabin"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Items Table -->
                         <div class="preview-table-container">
                             <table class="preview-table">
                                 <thead>
                                     <tr>
-                                        <th>Item</th>
-                                        <th>Details</th>
-                                        <th>Quantity</th>
+                                        <th>S/N</th>
+                                        <th>Description</th>
+                                        <th>Assigned Qty</th>
+                                        <th>Given Qty</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
@@ -731,6 +983,20 @@
                                     <!-- Will be populated dynamically -->
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        <!-- Assignee and Signature -->
+                        <div class="service-details-footer">
+                            <div class="detail-row">
+                                <div class="detail-label">Assignee:</div>
+                                <div class="detail-value" id="previewAssignee"></div>
+                            </div>
+                            <div class="signature-space">
+                                <div class="detail-label">Signature:</div>
+                                <div class="detail-value">
+                                    <div style="height: 50px; border-bottom: 1px solid #333; margin-top: 10px;"></div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-actions">
@@ -743,10 +1009,78 @@
         </div>
     </div>
 
+    <!-- Service History Modal -->
+    <div class="modal" id="serviceHistoryModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title">Service History</h2>
+                <button class="close-btn" id="closeHistoryModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="history-actions">
+                    <button class="btn btn-export" id="exportPdfBtn">
+                        <i>📄</i> Export PDF
+                    </button>
+                    <button class="btn btn-export" id="exportExcelBtn">
+                        <i>📊</i> Export Excel
+                    </button>
+                    <button class="btn btn-danger" id="clearHistoryBtn">
+                        <i>🗑️</i> Clear All History
+                    </button>
+                </div>
+                <div class="service-history-container">
+                    <table class="service-history-table">
+                        <thead>
+                            <tr>
+                                <th>S/N</th>
+                                <th>Date</th>
+                                <th>Fleet</th>
+                                <th>Service Type</th>
+                                <th>Service Cabin</th>
+                                <th>Assignee</th>
+                                <th>Items Count</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="serviceHistoryBody">
+                            <!-- Will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Details Modal -->
+    <div class="modal" id="serviceDetailsModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title">Service Details</h2>
+                <button class="close-btn" id="closeDetailsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="service-details" id="serviceDetailsContent">
+                    <!-- Service details will be populated here -->
+                </div>
+                <div class="history-actions">
+                    <button class="btn btn-export" id="printDetailsBtn">
+                        <i>🖨️</i> Print
+                    </button>
+                    <button class="btn btn-secondary" id="closeDetailsBtn">
+                        <i>←</i> Back to History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let fleetData = [];
         let isDataLoaded = false;
+        let serviceHistory = JSON.parse(localStorage.getItem('serviceHistory')) || [];
+        let givenQuantities = {}; // Store given quantities for each item
 
         // DOM elements
         const newServiceBtn = document.getElementById('newServiceBtn');
@@ -756,13 +1090,29 @@
         const loadingIndicator = document.getElementById('loadingIndicator');
         const errorContainer = document.getElementById('errorContainer');
         const successContainer = document.getElementById('successContainer');
-        const debugContainer = document.getElementById('debugContainer');
         const debugInfo = document.getElementById('debugInfo');
         const mainContent = document.getElementById('mainContent');
         const newServiceModal = document.getElementById('newServiceModal');
+        const serviceHistoryModal = document.getElementById('serviceHistoryModal');
+        const serviceDetailsModal = document.getElementById('serviceDetailsModal');
         const closeModalBtn = document.getElementById('closeModal');
+        const closeHistoryModalBtn = document.getElementById('closeHistoryModal');
+        const closeDetailsModalBtn = document.getElementById('closeDetailsModal');
+        const closeDetailsBtn = document.getElementById('closeDetailsBtn');
         const cancelBtn = document.getElementById('cancelBtn');
         const newServiceForm = document.getElementById('newServiceForm');
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const printDetailsBtn = document.getElementById('printDetailsBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const serviceDetailsContent = document.getElementById('serviceDetailsContent');
+
+        // Preview elements
+        const previewDate = document.getElementById('previewDate');
+        const previewFleet = document.getElementById('previewFleet');
+        const previewServiceType = document.getElementById('previewServiceType');
+        const previewServiceCabin = document.getElementById('previewServiceCabin');
+        const previewAssignee = document.getElementById('previewAssignee');
 
         // Form navigation buttons
         const nextToStep2Btn = document.getElementById('nextToStep2');
@@ -796,18 +1146,10 @@
         const step6Form = document.getElementById('step6-form');
         const step7Form = document.getElementById('step7-form');
 
-        // Quantity controls
-        const engineOilIncrease = document.getElementById('engineOilIncrease');
-        const engineOilDecrease = document.getElementById('engineOilDecrease');
-        const engineOilQty = document.getElementById('engineOilQty');
-        const gearOilIncrease = document.getElementById('gearOilIncrease');
-        const gearOilDecrease = document.getElementById('gearOilDecrease');
-        const gearOilQty = document.getElementById('gearOilQty');
-        
-        // Status indicators
-        const engineOilStatus = document.getElementById('engineOilStatus');
-        const gearOilStatus = document.getElementById('gearOilStatus');
-        
+        // Radio groups
+        const serviceTypeRadioGroup = document.getElementById('serviceTypeRadioGroup');
+        const serviceCabinRadioGroup = document.getElementById('serviceCabinRadioGroup');
+
         // Additional items
         const additionalItems = document.getElementById('additionalItems');
         const addItemBtn = document.getElementById('addItemBtn');
@@ -817,15 +1159,14 @@
         
         // Form selects
         const fleetSelect = document.getElementById('fleetSelect');
-        const serviceTypeSelect = document.getElementById('serviceTypeSelect');
-        const serviceCabin = document.getElementById('serviceCabin');
         const assigneeName = document.getElementById('assigneeName');
 
-        // Excel file URL - Using CORS proxy to bypass GitHub restrictions
-        const EXCEL_FILE_URL = 'https://corsproxy.io/?https://raw.githubusercontent.com/shakeelsnu/PMS/main/Fleet%20PMS.xlsx';
+        // Service History
+        const serviceHistoryBody = document.getElementById('serviceHistoryBody');
 
-        // Alternative URLs if the first one doesn't work
-        const ALTERNATIVE_URLS = [
+        // Excel file URL - Using multiple proxy options
+        const EXCEL_FILE_URLS = [
+            'https://corsproxy.io/?https://raw.githubusercontent.com/shakeelsnu/PMS/main/Fleet%20PMS.xlsx',
             'https://api.allorigins.win/raw?url=https://raw.githubusercontent.com/shakeelsnu/PMS/main/Fleet%20PMS.xlsx',
             'https://raw.githubusercontent.com/shakeelsnu/PMS/main/Fleet%20PMS.xlsx'
         ];
@@ -834,6 +1175,7 @@
         function init() {
             setupEventListeners();
             loadDataFromGitHub();
+            loadServiceHistory();
         }
 
         // Set up event listeners
@@ -841,11 +1183,21 @@
             // Button controls
             refreshDataBtn.addEventListener('click', loadDataFromGitHub);
             debugToggleBtn.addEventListener('click', toggleDebugInfo);
+            clearHistoryBtn.addEventListener('click', clearAllHistory);
             
             // Modal controls
             newServiceBtn.addEventListener('click', openNewServiceModal);
+            serviceHistoryBtn.addEventListener('click', openServiceHistoryModal);
             closeModalBtn.addEventListener('click', closeNewServiceModal);
+            closeHistoryModalBtn.addEventListener('click', closeServiceHistoryModal);
+            closeDetailsModalBtn.addEventListener('click', closeServiceDetailsModal);
+            closeDetailsBtn.addEventListener('click', closeServiceDetailsModal);
             cancelBtn.addEventListener('click', closeNewServiceModal);
+            
+            // Export buttons
+            exportPdfBtn.addEventListener('click', exportToPDF);
+            exportExcelBtn.addEventListener('click', exportToExcel);
+            printDetailsBtn.addEventListener('click', printServiceDetails);
             
             // Form navigation
             nextToStep2Btn.addEventListener('click', goToStep2);
@@ -861,24 +1213,66 @@
             nextToStep7Btn.addEventListener('click', goToStep7);
             backToStep6Btn.addEventListener('click', goToStep6);
             
-            // Quantity controls
-            engineOilIncrease.addEventListener('click', () => adjustQuantity(engineOilQty, 1));
-            engineOilDecrease.addEventListener('click', () => adjustQuantity(engineOilQty, -1));
-            gearOilIncrease.addEventListener('click', () => adjustQuantity(gearOilQty, 1));
-            gearOilDecrease.addEventListener('click', () => adjustQuantity(gearOilQty, -1));
-            
-            // Status toggles
-            engineOilStatus.addEventListener('click', () => toggleStatus(engineOilStatus));
-            gearOilStatus.addEventListener('click', () => toggleStatus(gearOilStatus));
-            
-            // Additional items
-            addItemBtn.addEventListener('click', addAdditionalItem);
-            
             // Form submission
             newServiceForm.addEventListener('submit', submitNewService);
             
-            // Service History button
-            serviceHistoryBtn.addEventListener('click', showServiceHistory);
+            // Radio button event listeners
+            setupRadioButtons();
+            
+            // Dynamic form elements
+            fleetSelect.addEventListener('change', updateServiceCabinOptions);
+            addItemBtn.addEventListener('click', addAdditionalItem);
+        }
+
+        // Setup radio button functionality
+        function setupRadioButtons() {
+            // Service Type radio buttons
+            serviceTypeRadioGroup.addEventListener('click', function(e) {
+                const radioOption = e.target.closest('.radio-option');
+                if (radioOption && !radioOption.classList.contains('radio-disabled')) {
+                    // Remove selected class from all options
+                    document.querySelectorAll('#serviceTypeRadioGroup .radio-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    radioOption.classList.add('selected');
+                    
+                    // Check the hidden radio input
+                    const radioInput = radioOption.querySelector('input[type="radio"]');
+                    radioInput.checked = true;
+                }
+            });
+
+            // Service Cabin radio buttons
+            serviceCabinRadioGroup.addEventListener('click', function(e) {
+                const radioOption = e.target.closest('.radio-option');
+                if (radioOption && !radioOption.classList.contains('radio-disabled')) {
+                    // Remove selected class from all options
+                    document.querySelectorAll('#serviceCabinRadioGroup .radio-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    radioOption.classList.add('selected');
+                    
+                    // Check the hidden radio input
+                    const radioInput = radioOption.querySelector('input[type="radio"]');
+                    radioInput.checked = true;
+                }
+            });
+        }
+
+        // Get selected service type
+        function getSelectedServiceType() {
+            const selectedOption = serviceTypeRadioGroup.querySelector('.radio-option.selected');
+            return selectedOption ? selectedOption.getAttribute('data-value') : '';
+        }
+
+        // Get selected service cabin
+        function getSelectedServiceCabin() {
+            const selectedOption = serviceCabinRadioGroup.querySelector('.radio-option.selected');
+            return selectedOption ? selectedOption.getAttribute('data-value') : '';
         }
 
         // Load data from GitHub Excel file
@@ -886,15 +1280,16 @@
             showLoading();
             hideError();
             hideSuccess();
+            addDebugInfo('Starting data fetch from GitHub...');
             
             let success = false;
             let lastError = '';
 
-            // Try multiple URLs in case of CORS issues
-            for (const url of [EXCEL_FILE_URL, ...ALTERNATIVE_URLS]) {
+            // Try multiple URLs
+            for (const url of EXCEL_FILE_URLS) {
                 try {
-                    console.log('Trying to fetch from:', url);
                     addDebugInfo(`Trying URL: ${url}`);
+                    console.log('Fetching from:', url);
                     
                     const response = await fetch(url);
                     
@@ -903,6 +1298,7 @@
                     }
                     
                     const arrayBuffer = await response.arrayBuffer();
+                    addDebugInfo('Successfully fetched file, parsing Excel data...');
                     
                     // Parse Excel file
                     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
@@ -913,20 +1309,19 @@
                     
                     // Convert to JSON
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    
-                    addDebugInfo(`Successfully loaded data from: ${url}`);
-                    addDebugInfo(`Excel data structure: ${JSON.stringify(jsonData.slice(0, 3))}`);
+                    addDebugInfo(`Excel data loaded: ${jsonData.length} rows`);
                     
                     // Process the data
                     processExcelData(jsonData);
                     
                     success = true;
+                    addDebugInfo('Data processing completed successfully!');
                     break;
                     
                 } catch (error) {
                     console.error(`Failed to fetch from ${url}:`, error);
                     lastError = error.message;
-                    addDebugInfo(`Failed to fetch from ${url}: ${error.message}`);
+                    addDebugInfo(`Failed: ${error.message}`);
                 }
             }
             
@@ -936,12 +1331,13 @@
                 showSuccess('Data loaded successfully from GitHub!');
             } else {
                 console.error('All URL attempts failed:', lastError);
+                addDebugInfo('All URL attempts failed, loading fallback data');
                 showError(`Failed to load data from all sources. Last error: ${lastError}. Using fallback data.`);
                 loadFallbackData();
             }
         }
 
-        // Process Excel data into our format
+        // Process Excel data
         function processExcelData(excelData) {
             if (!excelData || excelData.length < 2) {
                 throw new Error('Excel file is empty or has no data');
@@ -950,64 +1346,67 @@
             const headers = excelData[0];
             fleetData = [];
             
-            addDebugInfo(`Headers found: ${headers.join(', ')}`);
+            addDebugInfo(`Headers: ${headers.join(', ')}`);
             addDebugInfo(`Total rows: ${excelData.length}`);
             
-            // Try to auto-detect column indices
+            // Auto-detect column indices - more flexible matching
             const headerMap = {
-                'Fleet Type': 'fleetType',
-                'Vehicle Code': 'vehicleCode', 
-                'Service Type': 'serviceType',
-                'Filter Name': 'filterName',
-                'SAP Code': 'sapCode',
-                'Qty': 'qty',
-                'Quantity': 'qty',
-                'Location': 'location'
+                'fleet': 'fleetType',
+                'fleet type': 'fleetType',
+                'vehicle': 'vehicleCode',
+                'vehicle code': 'vehicleCode', 
+                'service': 'serviceType',
+                'service type': 'serviceType',
+                'filter': 'filterName',
+                'filter name': 'filterName',
+                'sap': 'sapCode',
+                'sap code': 'sapCode',
+                'qty': 'qty',
+                'quantity': 'qty',
+                'location': 'location'
             };
             
-            // Find column indices
             const columnIndices = {};
             headers.forEach((header, index) => {
-                const normalizedHeader = String(header).trim();
+                const normalizedHeader = String(header).toLowerCase().trim();
                 if (headerMap[normalizedHeader]) {
                     columnIndices[headerMap[normalizedHeader]] = index;
-                    addDebugInfo(`Mapped "${normalizedHeader}" to column ${index}`);
+                    addDebugInfo(`Mapped "${header}" to column ${index} as ${headerMap[normalizedHeader]}`);
                 }
             });
             
-            addDebugInfo(`Column indices: ${JSON.stringify(columnIndices)}`);
+            addDebugInfo(`Detected columns: ${JSON.stringify(columnIndices)}`);
             
             // Process data rows
             let processedCount = 0;
             for (let i = 1; i < excelData.length; i++) {
                 const row = excelData[i];
-                if (row && row.length > 0) {
+                if (row && row.length > 0 && !row.every(cell => cell === '' || cell === null || cell === undefined)) {
                     const item = {
-                        fleetType: columnIndices.fleetType !== undefined ? String(row[columnIndices.fleetType] || '') : '',
-                        vehicleCode: columnIndices.vehicleCode !== undefined ? String(row[columnIndices.vehicleCode] || '') : '',
-                        serviceType: columnIndices.serviceType !== undefined ? String(row[columnIndices.serviceType] || '') : '',
-                        filterName: columnIndices.filterName !== undefined ? String(row[columnIndices.filterName] || '') : '',
-                        sapCode: columnIndices.sapCode !== undefined ? String(row[columnIndices.sapCode] || '') : '',
-                        qty: columnIndices.qty !== undefined ? String(row[columnIndices.qty] || '') : '',
-                        location: columnIndices.location !== undefined ? String(row[columnIndices.location] || '') : ''
+                        fleetType: columnIndices.fleetType !== undefined ? String(row[columnIndices.fleetType] || '').trim() : '',
+                        vehicleCode: columnIndices.vehicleCode !== undefined ? String(row[columnIndices.vehicleCode] || '').trim() : '',
+                        serviceType: columnIndices.serviceType !== undefined ? String(row[columnIndices.serviceType] || '').trim() : '',
+                        filterName: columnIndices.filterName !== undefined ? String(row[columnIndices.filterName] || '').trim() : '',
+                        sapCode: columnIndices.sapCode !== undefined ? String(row[columnIndices.sapCode] || '').trim() : '',
+                        qty: columnIndices.qty !== undefined ? String(row[columnIndices.qty] || '').trim() : '',
+                        location: columnIndices.location !== undefined ? String(row[columnIndices.location] || '').trim() : ''
                     };
                     
                     // Only add if we have at least vehicleCode
-                    if (item.vehicleCode && item.vehicleCode.trim() !== '') {
+                    if (item.vehicleCode && item.vehicleCode !== '') {
                         fleetData.push(item);
                         processedCount++;
                     }
                 }
             }
             
-            addDebugInfo(`Processed ${processedCount} valid records out of ${excelData.length - 1} total rows`);
-            addDebugInfo(`Sample records: ${JSON.stringify(fleetData.slice(0, 3))}`);
+            addDebugInfo(`Processed ${processedCount} valid records`);
+            addDebugInfo(`Sample data: ${JSON.stringify(fleetData.slice(0, 3))}`);
             
-            // Initialize the application with the loaded data
             initializeWithData();
         }
 
-        // Load fallback data if GitHub fetch fails
+        // Load fallback data
         function loadFallbackData() {
             addDebugInfo('Loading fallback data');
             
@@ -1016,11 +1415,8 @@
                 { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "A", filterName: "OIL FILTER", sapCode: "10075229", qty: "1", location: "BH0104C2_S-03" },
                 { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL FILTER", sapCode: "10075226", qty: "1", location: "BH0104C2_S-03" },
                 { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "B", filterName: "FUEL WATER SEP", sapCode: "10075228", qty: "1", location: "BH0104C2_S-03" },
-                { fleetType: "HINO-CANTER", vehicleCode: "T-7179_QAIG-PT-065_REG #255436", serviceType: "C", filterName: "AIR FILTER", sapCode: "10023314", qty: "1", location: "BH0104C2_S-04" },
                 { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", location: "BH0104C2_P-03" },
-                { fleetType: "HINO-TRUCK", vehicleCode: "T-8868_QAIG-TH-030_REG#68472", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022739", qty: "1", location: "BH0104C1_P-03, BH0104C2_P-03" },
-                { fleetType: "HINO-TRUCK", vehicleCode: "T-8870_QAIG-TH-031_REG#68448", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", location: "BH0104C2_P-03" },
-                { fleetType: "HINO-TRUCK", vehicleCode: "T-8959_QAIG-TH-048_REG#208968", serviceType: "A", filterName: "OIL FILTER", sapCode: "10022738", qty: "1", location: "BH0104C2_P-03" }
+                { fleetType: "CRANE", vehicleCode: "C-001_CRANE_SPECIAL", serviceType: "A", filterName: "CRANE FILTER", sapCode: "CRANE001", qty: "1", location: "CRANE_BAY_01" }
             ];
             
             hideLoading();
@@ -1029,7 +1425,7 @@
             showSuccess('Using fallback data. GitHub data could not be loaded.');
         }
 
-        // Initialize the application with loaded data
+        // Initialize with loaded data
         function initializeWithData() {
             populateFleetSelect();
             isDataLoaded = true;
@@ -1038,7 +1434,80 @@
             addDebugInfo(`Unique vehicles: ${[...new Set(fleetData.map(item => item.vehicleCode))].length}`);
         }
 
-        // UI state management functions
+        // Update Service Cabin options based on selected fleet
+        function updateServiceCabinOptions() {
+            const selectedFleet = fleetSelect.value;
+            const selectedFleetText = fleetSelect.options[fleetSelect.selectedIndex].text;
+            const isCrane = selectedFleetText.toLowerCase().includes('crane');
+            
+            addDebugInfo(`Updating Service Cabin for fleet: ${selectedFleet}, is crane: ${isCrane}`);
+            
+            // Clear and rebuild Service Cabin radio options
+            serviceCabinRadioGroup.innerHTML = '';
+            
+            // Add S/S and D/C options only if fleet is a crane
+            if (isCrane) {
+                // S/S option
+                const ssOption = document.createElement('div');
+                ssOption.className = 'radio-option';
+                ssOption.setAttribute('data-value', 'S/S');
+                ssOption.innerHTML = `
+                    <div class="radio-custom"></div>
+                    <span class="radio-label">S/S</span>
+                    <input type="radio" name="serviceCabin" value="S/S" required>
+                `;
+                serviceCabinRadioGroup.appendChild(ssOption);
+                
+                // D/C option
+                const dcOption = document.createElement('div');
+                dcOption.className = 'radio-option';
+                dcOption.setAttribute('data-value', 'D/C');
+                dcOption.innerHTML = `
+                    <div class="radio-custom"></div>
+                    <span class="radio-label">D/C</span>
+                    <input type="radio" name="serviceCabin" value="D/C">
+                `;
+                serviceCabinRadioGroup.appendChild(dcOption);
+                
+                addDebugInfo('S/S and D/C options enabled for crane');
+            } else {
+                // Grey out S/S and D/C options for non-crane fleets
+                const ssOption = document.createElement('div');
+                ssOption.className = 'radio-option radio-disabled';
+                ssOption.setAttribute('data-value', 'S/S');
+                ssOption.innerHTML = `
+                    <div class="radio-custom"></div>
+                    <span class="radio-label">S/S (Crane Only)</span>
+                    <input type="radio" name="serviceCabin" value="S/S" disabled>
+                `;
+                serviceCabinRadioGroup.appendChild(ssOption);
+                
+                const dcOption = document.createElement('div');
+                dcOption.className = 'radio-option radio-disabled';
+                dcOption.setAttribute('data-value', 'D/C');
+                dcOption.innerHTML = `
+                    <div class="radio-custom"></div>
+                    <span class="radio-label">D/C (Crane Only)</span>
+                    <input type="radio" name="serviceCabin" value="D/C" disabled>
+                `;
+                serviceCabinRadioGroup.appendChild(dcOption);
+                
+                addDebugInfo('S/S and D/C options disabled for non-crane fleet');
+            }
+            
+            // Always add N/A option
+            const naOption = document.createElement('div');
+            naOption.className = 'radio-option';
+            naOption.setAttribute('data-value', 'N/A');
+            naOption.innerHTML = `
+                <div class="radio-custom"></div>
+                <span class="radio-label">N/A</span>
+                <input type="radio" name="serviceCabin" value="N/A">
+            `;
+            serviceCabinRadioGroup.appendChild(naOption);
+        }
+
+        // UI state management
         function showLoading() {
             loadingIndicator.style.display = 'flex';
             mainContent.style.display = 'none';
@@ -1057,11 +1526,7 @@
         }
 
         function showError(message) {
-            errorContainer.innerHTML = `
-                <div class="error-message">
-                    <strong>Error:</strong> ${message}
-                </div>
-            `;
+            errorContainer.innerHTML = `<div class="error-message"><strong>Error:</strong> ${message}</div>`;
             errorContainer.style.display = 'block';
         }
 
@@ -1070,12 +1535,9 @@
         }
 
         function showSuccess(message) {
-            successContainer.innerHTML = `
-                <div class="success-message">
-                    <strong>Success:</strong> ${message}
-                </div>
-            `;
+            successContainer.innerHTML = `<div class="success-message"><strong>Success:</strong> ${message}</div>`;
             successContainer.style.display = 'block';
+            setTimeout(hideSuccess, 5000);
         }
 
         function hideSuccess() {
@@ -1089,20 +1551,19 @@
         }
 
         function toggleDebugInfo() {
-            if (debugContainer.style.display === 'none') {
-                debugContainer.style.display = 'block';
+            if (debugInfo.style.display === 'none') {
+                debugInfo.style.display = 'block';
             } else {
-                debugContainer.style.display = 'none';
+                debugInfo.style.display = 'none';
             }
         }
 
-        // Populate fleet select in modal
+        // Populate fleet select
         function populateFleetSelect() {
             const uniqueVehicles = [...new Set(fleetData.map(item => item.vehicleCode).filter(code => code && code.trim() !== ''))];
             
             addDebugInfo(`Populating fleet select with ${uniqueVehicles.length} unique vehicles`);
             
-            // Clear existing options
             fleetSelect.innerHTML = '<option value="">-- Select a fleet --</option>';
             
             if (uniqueVehicles.length === 0) {
@@ -1124,9 +1585,6 @@
             addDebugInfo(`Successfully populated ${uniqueVehicles.length} fleets in dropdown`);
         }
 
-        // Rest of the functions remain the same as previous implementation...
-        // (Modal functions, form navigation, quantity controls, etc.)
-
         // Modal functions
         function openNewServiceModal() {
             if (!isDataLoaded) {
@@ -1141,110 +1599,91 @@
             newServiceModal.style.display = 'none';
         }
 
+        function openServiceHistoryModal() {
+            serviceHistoryModal.style.display = 'flex';
+            loadServiceHistory();
+        }
+
+        function closeServiceHistoryModal() {
+            serviceHistoryModal.style.display = 'none';
+        }
+
+        function openServiceDetailsModal(serviceId) {
+            const service = serviceHistory.find(s => s.id === serviceId);
+            if (service) {
+                displayServiceDetails(service);
+                serviceDetailsModal.style.display = 'flex';
+                serviceHistoryModal.style.display = 'none';
+            }
+        }
+
+        function closeServiceDetailsModal() {
+            serviceDetailsModal.style.display = 'none';
+            openServiceHistoryModal();
+        }
+
         function resetForm() {
             goToStep1();
             fleetSelect.value = '';
-            serviceTypeSelect.value = '';
-            serviceCabin.value = '';
+            
+            // Reset service type radio buttons
+            document.querySelectorAll('#serviceTypeRadioGroup .radio-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('#serviceTypeRadioGroup input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
+            // Reset service cabin radio buttons
+            document.querySelectorAll('#serviceCabinRadioGroup .radio-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelectorAll('#serviceCabinRadioGroup input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
+            
             assigneeName.value = '';
-            
-            // Reset quantities
-            engineOilQty.textContent = '5';
-            gearOilQty.textContent = '2';
-            
-            // Reset status indicators
-            engineOilStatus.className = 'status-indicator ideal';
-            engineOilStatus.nextElementSibling.textContent = 'Ideal';
-            gearOilStatus.className = 'status-indicator ideal';
-            gearOilStatus.nextElementSibling.textContent = 'Ideal';
-            
-            // Reset additional items
+            givenQuantities = {};
             additionalItems.innerHTML = `
                 <div class="additional-item">
-                    <input type="text" placeholder="Item name">
-                    <input type="number" placeholder="Qty" min="1">
-                    <select>
-                        <option value="pieces">Pieces</option>
-                        <option value="ltrs">Liters</option>
+                    <input type="text" placeholder="Description" class="item-desc">
+                    <input type="text" placeholder="SAP Code" class="item-sap">
+                    <input type="number" placeholder="Qty" min="1" class="item-qty">
+                    <select class="item-unit">
+                        <option value="Pieces">Pieces</option>
+                        <option value="Ltrs">Ltrs</option>
                     </select>
                 </div>
             `;
-            
-            // Reset preview table
             previewTableBody.innerHTML = '';
-            
-            // Populate filters table based on selected fleet and service type
+        }
+
+        // Form navigation
+        function goToStep1() { setActiveStep(step1Form, step1Indicator); }
+        function goToStep2() { 
+            if (!fleetSelect.value) { alert('Please select a fleet'); return; }
+            setActiveStep(step2Form, step2Indicator); 
+        }
+        function goToStep3() { 
+            if (!getSelectedServiceType()) { alert('Please select a service type'); return; }
+            setActiveStep(step3Form, step3Indicator); 
+        }
+        function goToStep4() { 
+            if (!getSelectedServiceCabin()) { alert('Please select a service cabin'); return; }
             populateFiltersTable();
+            setActiveStep(step4Form, step4Indicator); 
         }
-
-        // Form navigation functions
-        function goToStep1() {
-            setActiveStep(step1Form, step1Indicator);
-        }
-
-        function goToStep2() {
-            if (!fleetSelect.value) {
-                alert('Please select a fleet');
-                return;
-            }
-            setActiveStep(step2Form, step2Indicator);
-        }
-
-        function goToStep3() {
-            if (!serviceTypeSelect.value) {
-                alert('Please select a service type');
-                return;
-            }
-            setActiveStep(step3Form, step3Indicator);
-        }
-
-        function goToStep4() {
-            if (!serviceCabin.value) {
-                alert('Please select a service cabin');
-                return;
-            }
-            populateFiltersTable();
-            setActiveStep(step4Form, step4Indicator);
-        }
-
-        function goToStep5() {
-            setActiveStep(step5Form, step5Indicator);
-        }
-
-        function goToStep6() {
-            setActiveStep(step6Form, step6Indicator);
-        }
-
-        function goToStep7() {
-            if (!assigneeName.value) {
-                alert('Please enter assignee name');
-                return;
-            }
+        function goToStep5() { setActiveStep(step5Form, step5Indicator); }
+        function goToStep6() { setActiveStep(step6Form, step6Indicator); }
+        function goToStep7() { 
+            if (!assigneeName.value) { alert('Please enter assignee name'); return; }
             generatePreview();
-            setActiveStep(step7Form, step7Indicator);
+            setActiveStep(step7Form, step7Indicator); 
         }
 
-        // Set active step
         function setActiveStep(stepForm, stepIndicator) {
-            // Hide all steps
-            step1Form.classList.remove('active');
-            step2Form.classList.remove('active');
-            step3Form.classList.remove('active');
-            step4Form.classList.remove('active');
-            step5Form.classList.remove('active');
-            step6Form.classList.remove('active');
-            step7Form.classList.remove('active');
-            
-            // Remove active from all indicators
-            step1Indicator.classList.remove('active');
-            step2Indicator.classList.remove('active');
-            step3Indicator.classList.remove('active');
-            step4Indicator.classList.remove('active');
-            step5Indicator.classList.remove('active');
-            step6Indicator.classList.remove('active');
-            step7Indicator.classList.remove('active');
-            
-            // Show active step
+            document.querySelectorAll('.form-step').forEach(step => step.classList.remove('active'));
+            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
             stepForm.classList.add('active');
             stepIndicator.classList.add('active');
         }
@@ -1252,8 +1691,9 @@
         // Populate filters table with data from Excel
         function populateFiltersTable() {
             const filtersTableBody = document.getElementById('filtersTableBody');
+            const lubricantsTableBody = document.getElementById('lubricantsTableBody');
             const selectedFleet = fleetSelect.value;
-            const selectedServiceType = serviceTypeSelect.value;
+            const selectedServiceType = getSelectedServiceType();
             
             addDebugInfo(`Populating filters for fleet: ${selectedFleet}, service type: ${selectedServiceType}`);
             
@@ -1265,72 +1705,85 @@
             addDebugInfo(`Found ${filteredData.length} matching records`);
             
             filtersTableBody.innerHTML = '';
+            lubricantsTableBody.innerHTML = '';
             
             if (filteredData.length === 0) {
-                const row = document.createElement('tr');
-                row.innerHTML = `<td colspan="4" style="text-align: center;">No filters found for this combination</td>`;
-                filtersTableBody.appendChild(row);
+                filtersTableBody.innerHTML = `<tr><td colspan="3" style="text-align: center;">No filters found for this combination</td></tr>`;
             } else {
                 filteredData.forEach(item => {
                     const row = document.createElement('tr');
-                    // Random ideal status for demonstration
-                    const isIdeal = Math.random() > 0.3;
+                    const itemKey = `${item.filterName}_${item.sapCode}`;
+                    const givenQty = givenQuantities[itemKey] || item.qty;
                     
                     row.innerHTML = `
-                        <td>${item.filterName}</td>
-                        <td class="ideal-status">
-                            <div class="status-indicator ${isIdeal ? 'ideal' : 'not-ideal'}"></div>
-                            <span>${isIdeal ? 'Ideal' : 'Not Ideal'}</span>
-                        </td>
                         <td>
-                            <div class="qty-control">
-                                <button type="button" class="qty-btn">-</button>
-                                <span class="qty-value">${item.qty}</span>
-                                <button type="button" class="qty-btn">+</button>
+                            <div class="description-with-sap">
+                                <div>${item.filterName}</div>
+                                <div class="sap-code">SAP: ${item.sapCode || 'N/A'}</div>
                             </div>
                         </td>
-                        <td>Pieces</td>
+                        <td class="assigned-qty">${item.qty} Pieces</td>
+                        <td>
+                            <input type="number" 
+                                   class="given-qty-input" 
+                                   value="${givenQty}" 
+                                   min="0" 
+                                   data-key="${itemKey}"
+                                   data-assigned="${item.qty}">
+                        </td>
                     `;
                     filtersTableBody.appendChild(row);
                     
-                    // Add event listeners to the quantity buttons
-                    const qtyButtons = row.querySelectorAll('.qty-btn');
-                    const qtyValue = row.querySelector('.qty-value');
+                    // Store initial given quantity
+                    givenQuantities[itemKey] = givenQty;
                     
-                    qtyButtons[0].addEventListener('click', () => adjustQuantity(qtyValue, -1));
-                    qtyButtons[1].addEventListener('click', () => adjustQuantity(qtyValue, 1));
-                    
-                    // Add event listener to the status indicator
-                    const statusIndicator = row.querySelector('.status-indicator');
-                    const statusText = row.querySelector('.ideal-status span');
-                    statusIndicator.addEventListener('click', function() {
-                        toggleStatus(this, statusText);
+                    // Add event listener to given quantity input
+                    const givenQtyInput = row.querySelector('.given-qty-input');
+                    givenQtyInput.addEventListener('change', function() {
+                        const key = this.getAttribute('data-key');
+                        givenQuantities[key] = this.value;
                     });
                 });
             }
-        }
-
-        // Adjust quantity
-        function adjustQuantity(qtyElement, change) {
-            let currentQty = parseInt(qtyElement.textContent);
-            currentQty += change;
             
-            if (currentQty < 0) currentQty = 0;
+            // Add lubricants with SAP codes
+            const lubricants = [
+                { name: 'Engine Oil', sapCode: 'LUB-001' },
+                { name: 'Gear Oil', sapCode: 'LUB-002' }
+            ];
             
-            qtyElement.textContent = currentQty;
-        }
-
-        // Toggle status between ideal and not ideal
-        function toggleStatus(statusElement, statusTextElement = null) {
-            if (statusElement.classList.contains('ideal')) {
-                statusElement.classList.remove('ideal');
-                statusElement.classList.add('not-ideal');
-                if (statusTextElement) statusTextElement.textContent = 'Not Ideal';
-            } else {
-                statusElement.classList.remove('not-ideal');
-                statusElement.classList.add('ideal');
-                if (statusTextElement) statusTextElement.textContent = 'Ideal';
-            }
+            lubricants.forEach(lubricant => {
+                const row = document.createElement('tr');
+                const itemKey = `lubricant_${lubricant.name}`;
+                const givenQty = givenQuantities[itemKey] || 0;
+                
+                row.innerHTML = `
+                    <td>
+                        <div class="description-with-sap">
+                            <div>${lubricant.name}</div>
+                            <div class="sap-code">SAP: ${lubricant.sapCode}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="number" 
+                               class="given-qty-input" 
+                               value="${givenQty}" 
+                               min="0" 
+                               data-key="${itemKey}">
+                    </td>
+                `;
+                lubricantsTableBody.appendChild(row);
+                
+                // Store initial given quantity
+                givenQuantities[itemKey] = givenQty;
+                
+                // Add event listener to given quantity input
+                const givenQtyInput = row.querySelector('.given-qty-input');
+                givenQtyInput.addEventListener('change', function() {
+                    const key = this.getAttribute('data-key');
+                    givenQuantities[key] = this.value;
+                });
+            });
         }
 
         // Add additional item
@@ -1338,11 +1791,12 @@
             const newItem = document.createElement('div');
             newItem.className = 'additional-item';
             newItem.innerHTML = `
-                <input type="text" placeholder="Item name">
-                <input type="number" placeholder="Qty" min="1">
-                <select>
-                    <option value="pieces">Pieces</option>
-                    <option value="ltrs">Liters</option>
+                <input type="text" placeholder="Description" class="item-desc">
+                <input type="text" placeholder="SAP Code" class="item-sap">
+                <input type="number" placeholder="Qty" min="1" class="item-qty">
+                <select class="item-unit">
+                    <option value="Pieces">Pieces</option>
+                    <option value="Ltrs">Ltrs</option>
                 </select>
             `;
             additionalItems.appendChild(newItem);
@@ -1350,73 +1804,100 @@
 
         // Generate preview
         function generatePreview() {
+            // Update header details - Date only (no time)
+            const now = new Date();
+            previewDate.textContent = now.toLocaleDateString();
+            previewFleet.textContent = fleetSelect.options[fleetSelect.selectedIndex].text;
+            
+            // Update service type display
+            const selectedServiceType = getSelectedServiceType();
+            previewServiceType.textContent = selectedServiceType === 'A' ? 'Service A' : 
+                                           selectedServiceType === 'B' ? 'Service B' : 
+                                           selectedServiceType === 'C' ? 'Service C' : '';
+            
+            // Update service cabin display
+            const selectedServiceCabin = getSelectedServiceCabin();
+            previewServiceCabin.textContent = selectedServiceCabin;
+            
+            previewAssignee.textContent = assigneeName.value;
+            
+            // Clear and populate items table
             previewTableBody.innerHTML = '';
-            
-            // Add service details
-            addPreviewRow('Fleet', fleetSelect.options[fleetSelect.selectedIndex].text);
-            addPreviewRow('Service Type', serviceTypeSelect.options[serviceTypeSelect.selectedIndex].text);
-            addPreviewRow('Service Cabin', serviceCabin.options[serviceCabin.selectedIndex].text);
-            addPreviewRow('Assignee', assigneeName.value);
-            
+            let serialNumber = 1;
+
             // Add filters
             const filterRows = document.querySelectorAll('#filtersTableBody tr');
             filterRows.forEach(row => {
                 const cells = row.cells;
-                const name = cells[0].textContent;
-                const status = cells[1].querySelector('span').textContent;
-                const qty = cells[2].querySelector('.qty-value').textContent;
-                const unit = cells[3].textContent;
+                const descElement = cells[0].querySelector('.description-with-sap');
+                const desc = descElement.querySelector('div:first-child').textContent;
+                const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
+                const assignedQty = cells[1].textContent;
+                const givenQtyInput = row.querySelector('.given-qty-input');
+                const givenQty = givenQtyInput ? givenQtyInput.value : '0';
+                const assignedValue = assignedQty.replace(' Pieces', '');
                 
-                addPreviewRow(name, `${qty} ${unit}`, status);
+                const status = getQuantityStatus(givenQty, assignedValue);
+                
+                addPreviewRow(serialNumber++, desc, sapCode, assignedQty, `${givenQty} Pieces`, status);
             });
-            
+
             // Add lubricants
-            addPreviewRow('Engine Oil', `${engineOilQty.textContent} Ltrs`, 
-                         engineOilStatus.classList.contains('ideal') ? 'Ideal' : 'Not Ideal');
-            addPreviewRow('Gear Oil', `${gearOilQty.textContent} Ltrs`, 
-                         gearOilStatus.classList.contains('ideal') ? 'Ideal' : 'Not Ideal');
-            
+            const lubricantRows = document.querySelectorAll('#lubricantsTableBody tr');
+            lubricantRows.forEach(row => {
+                const cells = row.cells;
+                const descElement = cells[0].querySelector('.description-with-sap');
+                const desc = descElement.querySelector('div:first-child').textContent;
+                const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
+                const givenQtyInput = row.querySelector('.given-qty-input');
+                const givenQty = givenQtyInput ? givenQtyInput.value : '0';
+                
+                if (parseInt(givenQty) > 0) {
+                    addPreviewRow(serialNumber++, desc, sapCode, '', `${givenQty} Ltrs`, 'Given');
+                }
+            });
+
             // Add additional items
             const additionalItemInputs = additionalItems.querySelectorAll('.additional-item');
             additionalItemInputs.forEach(item => {
                 const inputs = item.querySelectorAll('input, select');
-                const name = inputs[0].value;
-                const qty = inputs[1].value;
-                const unit = inputs[2].value;
+                const desc = inputs[0].value;
+                const sapCode = inputs[1].value;
+                const qty = inputs[2].value;
+                const unit = inputs[3].value;
                 
-                if (name && qty) {
-                    addPreviewRow(name, `${qty} ${unit === 'pieces' ? 'Pieces' : 'Ltrs'}`);
+                if (desc && qty) {
+                    addPreviewRow(serialNumber++, desc, sapCode || '', '', `${qty} ${unit}`, 'Additional');
                 }
             });
         }
 
+        // Get quantity status (Ideal, More, Less)
+        function getQuantityStatus(givenQty, assignedQty) {
+            const given = parseFloat(givenQty);
+            const assigned = parseFloat(assignedQty);
+            
+            if (given === assigned) return 'Ideal';
+            if (given > assigned) return 'More';
+            if (given < assigned) return 'Less';
+            return 'Not Given';
+        }
+
         // Add row to preview table
-        function addPreviewRow(item, details, status = '') {
+        function addPreviewRow(sn, desc, sapCode, assignedQty, givenQty, status) {
             const row = document.createElement('tr');
-            
-            if (status) {
-                row.innerHTML = `
-                    <td>${item}</td>
-                    <td>${details}</td>
-                    <td>${status}</td>
-                `;
-                
-                // Color code the status
-                const statusCell = row.cells[2];
-                if (status === 'Ideal') {
-                    statusCell.style.color = 'var(--success-color)';
-                    statusCell.style.fontWeight = 'bold';
-                } else if (status === 'Not Ideal') {
-                    statusCell.style.color = 'var(--accent-color)';
-                    statusCell.style.fontWeight = 'bold';
-                }
-            } else {
-                row.innerHTML = `
-                    <td>${item}</td>
-                    <td colspan="2">${details}</td>
-                `;
-            }
-            
+            row.innerHTML = `
+                <td>${sn}</td>
+                <td>
+                    <div class="description-with-sap">
+                        <div>${desc}</div>
+                        ${sapCode ? `<div class="sap-code">SAP: ${sapCode}</div>` : ''}
+                    </div>
+                </td>
+                <td>${assignedQty}</td>
+                <td>${givenQty}</td>
+                <td>${status}</td>
+            `;
             previewTableBody.appendChild(row);
         }
 
@@ -1424,19 +1905,314 @@
         function submitNewService(e) {
             e.preventDefault();
             
-            // In a real application, you would send this data to a server
-            alert('Service submitted successfully!');
+            const serviceRecord = {
+                id: Date.now(),
+                date: new Date().toLocaleDateString(), // Date only, no time
+                fleet: fleetSelect.value,
+                serviceType: getSelectedServiceType(),
+                serviceCabin: getSelectedServiceCabin(),
+                assignee: assigneeName.value,
+                items: getServiceItems(),
+                status: 'Completed'
+            };
             
-            // Close modal
+            serviceHistory.unshift(serviceRecord);
+            saveServiceHistory();
+            
+            alert('Service submitted successfully!');
             closeNewServiceModal();
+            showSuccess('Service record saved successfully!');
         }
 
-        // Show service history (placeholder)
-        function showServiceHistory() {
-            alert('Service History functionality would show a detailed history of all services.');
+        // Get all service items for the record
+        function getServiceItems() {
+            const items = [];
+            let serialNumber = 1;
+
+            // Add filters
+            const filterRows = document.querySelectorAll('#filtersTableBody tr');
+            filterRows.forEach(row => {
+                const cells = row.cells;
+                const descElement = cells[0].querySelector('.description-with-sap');
+                const desc = descElement.querySelector('div:first-child').textContent;
+                const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
+                const givenQtyInput = row.querySelector('.given-qty-input');
+                const givenQty = givenQtyInput ? givenQtyInput.value : '0';
+                
+                items.push({
+                    sn: serialNumber++,
+                    description: desc,
+                    sapCode: sapCode,
+                    assignedQuantity: cells[1].textContent,
+                    givenQuantity: `${givenQty} Pieces`,
+                    status: getQuantityStatus(givenQty, cells[1].textContent.replace(' Pieces', ''))
+                });
+            });
+
+            // Add lubricants
+            const lubricantRows = document.querySelectorAll('#lubricantsTableBody tr');
+            lubricantRows.forEach(row => {
+                const cells = row.cells;
+                const descElement = cells[0].querySelector('.description-with-sap');
+                const desc = descElement.querySelector('div:first-child').textContent;
+                const sapCode = descElement.querySelector('.sap-code').textContent.replace('SAP: ', '');
+                const givenQtyInput = row.querySelector('.given-qty-input');
+                const givenQty = givenQtyInput ? givenQtyInput.value : '0';
+                
+                if (parseInt(givenQty) > 0) {
+                    items.push({
+                        sn: serialNumber++,
+                        description: desc,
+                        sapCode: sapCode,
+                        assignedQuantity: '',
+                        givenQuantity: `${givenQty} Ltrs`,
+                        status: 'Given'
+                    });
+                }
+            });
+
+            // Add additional items
+            const additionalItemInputs = additionalItems.querySelectorAll('.additional-item');
+            additionalItemInputs.forEach(item => {
+                const inputs = item.querySelectorAll('input, select');
+                const desc = inputs[0].value;
+                const sapCode = inputs[1].value;
+                const qty = inputs[2].value;
+                const unit = inputs[3].value;
+                
+                if (desc && qty) {
+                    items.push({
+                        sn: serialNumber++,
+                        description: desc,
+                        sapCode: sapCode || '',
+                        assignedQuantity: '',
+                        givenQuantity: `${qty} ${unit}`,
+                        status: 'Additional'
+                    });
+                }
+            });
+
+            return items;
         }
 
-        // Initialize the application when DOM is loaded
+        // Service History functions
+        function loadServiceHistory() {
+            serviceHistoryBody.innerHTML = '';
+            
+            if (serviceHistory.length === 0) {
+                serviceHistoryBody.innerHTML = `<tr><td colspan="9" style="text-align: center;">No service history found</td></tr>`;
+                return;
+            }
+            
+            serviceHistory.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${record.date}</td>
+                    <td>${record.fleet}</td>
+                    <td>${record.serviceType === 'A' ? 'Service A' : record.serviceType === 'B' ? 'Service B' : record.serviceType === 'C' ? 'Service C' : record.serviceType}</td>
+                    <td>${record.serviceCabin}</td>
+                    <td>${record.assignee}</td>
+                    <td>${record.items.length}</td>
+                    <td>${record.status}</td>
+                    <td>
+                        <button class="btn btn-small btn-primary view-details-btn" data-id="${record.id}">
+                            <i>👁️</i> View
+                        </button>
+                        <button class="btn btn-small btn-danger delete-service-btn" data-id="${record.id}">
+                            <i>🗑️</i> Delete
+                        </button>
+                    </td>
+                `;
+                serviceHistoryBody.appendChild(row);
+            });
+            
+            // Add event listeners to view buttons
+            document.querySelectorAll('.view-details-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const serviceId = parseInt(this.getAttribute('data-id'));
+                    openServiceDetailsModal(serviceId);
+                });
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-service-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const serviceId = parseInt(this.getAttribute('data-id'));
+                    deleteServiceRecord(serviceId);
+                });
+            });
+        }
+
+        // Delete service record
+        function deleteServiceRecord(serviceId) {
+            if (confirm('Are you sure you want to delete this service record?')) {
+                serviceHistory = serviceHistory.filter(record => record.id !== serviceId);
+                saveServiceHistory();
+                loadServiceHistory();
+                showSuccess('Service record deleted successfully!');
+            }
+        }
+
+        // Clear all history
+        function clearAllHistory() {
+            if (confirm('Are you sure you want to clear ALL service history? This action cannot be undone.')) {
+                serviceHistory = [];
+                saveServiceHistory();
+                loadServiceHistory();
+                showSuccess('All service history cleared successfully!');
+            }
+        }
+
+        // Display service details
+        function displayServiceDetails(service) {
+            let html = `
+                <h4>Service Details</h4>
+                <div class="detail-row">
+                    <div class="detail-label">Service ID:</div>
+                    <div class="detail-value">${service.id}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Date:</div>
+                    <div class="detail-value">${service.date}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Fleet:</div>
+                    <div class="detail-value">${service.fleet}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Service Type:</div>
+                    <div class="detail-value">${service.serviceType === 'A' ? 'Service A' : service.serviceType === 'B' ? 'Service B' : service.serviceType === 'C' ? 'Service C' : service.serviceType}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Service Cabin:</div>
+                    <div class="detail-value">${service.serviceCabin}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Assignee:</div>
+                    <div class="detail-value">${service.assignee}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Status:</div>
+                    <div class="detail-value">${service.status}</div>
+                </div>
+                
+                <h4 style="margin-top: 20px;">Service Items</h4>
+                <table class="preview-table">
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Description</th>
+                            <th>Assigned Qty</th>
+                            <th>Given Qty</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            service.items.forEach(item => {
+                html += `
+                    <tr>
+                        <td>${item.sn}</td>
+                        <td>
+                            <div class="description-with-sap">
+                                <div>${item.description}</div>
+                                ${item.sapCode ? `<div class="sap-code">SAP: ${item.sapCode}</div>` : ''}
+                            </div>
+                        </td>
+                        <td>${item.assignedQuantity}</td>
+                        <td>${item.givenQuantity}</td>
+                        <td>${item.status}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                    </tbody>
+                </table>
+            `;
+            
+            serviceDetailsContent.innerHTML = html;
+        }
+
+        // Print service details
+        function printServiceDetails() {
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Service Details - ${serviceDetailsContent.querySelector('h4').textContent}</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f2f2f2; }
+                            .detail-row { margin-bottom: 10px; }
+                            .detail-label { font-weight: bold; display: inline-block; width: 150px; }
+                            .sap-code { font-size: 0.8rem; color: #666; margin-top: 2px; }
+                        </style>
+                    </head>
+                    <body>
+                        <h2>Service Details</h2>
+                        ${serviceDetailsContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function saveServiceHistory() {
+            localStorage.setItem('serviceHistory', JSON.stringify(serviceHistory));
+        }
+
+        // Export functions
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.text('Service History Report', 20, 20);
+            
+            const headers = [['S/N', 'Date', 'Fleet', 'Service Type', 'Service Cabin', 'Assignee', 'Items Count', 'Status']];
+            const data = serviceHistory.map((record, index) => [
+                index + 1,
+                record.date,
+                record.fleet,
+                record.serviceType === 'A' ? 'Service A' : record.serviceType === 'B' ? 'Service B' : record.serviceType === 'C' ? 'Service C' : record.serviceType,
+                record.serviceCabin,
+                record.assignee,
+                record.items.length,
+                record.status
+            ]);
+            
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 30,
+            });
+            
+            doc.save('service-history.pdf');
+        }
+
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet(serviceHistory.map((record, index) => ({
+                'S/N': index + 1,
+                'Date': record.date,
+                'Fleet': record.fleet,
+                'Service Type': record.serviceType === 'A' ? 'Service A' : record.serviceType === 'B' ? 'Service B' : record.serviceType === 'C' ? 'Service C' : record.serviceType,
+                'Service Cabin': record.serviceCabin,
+                'Assignee': record.assignee,
+                'Items Count': record.items.length,
+                'Status': record.status
+            })));
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Service History');
+            XLSX.writeFile(wb, 'service-history.xlsx');
+        }
+
+        // Initialize the application
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
